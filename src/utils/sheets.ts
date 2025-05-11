@@ -55,8 +55,17 @@ export class SheetsService {
     }
   }
 
+  // 年度（9月始まり）に基づくシート名を自動生成
+  private getCurrentFiscalSheetName(): string {
+    const now = new Date();
+    const year = now.getMonth() + 1 >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+    return `${year}年度`;
+  }
+
   async appendExpenses(expenses: ExpenseData[]): Promise<void> {
     try {
+      // 年度シート名を自動決定
+      this.sheetName = this.getCurrentFiscalSheetName();
       await this.ensureSheetExists();
 
       // 1. 原本シートの1〜6行目（A〜AE）を取得・コピー
@@ -80,7 +89,12 @@ export class SheetsService {
       });
       const existingData = existingRes.data.values || [];
 
-      // 3. 重複していないSlackデータだけをappendで追記
+      // 3. その年度の9月1日以降のSlackデータのみ抽出
+      const year = Number(this.sheetName.replace('年度', ''));
+      const fiscalStart = new Date(`${year}-09-01`);
+      const filteredExpenses = expenses.filter(e => new Date(e.date) >= fiscalStart);
+
+      // 4. 重複していないSlackデータだけをappendで追記
       const normalize = (v: unknown) => (v || '').toString().trim();
       const isDuplicate = (expense: ExpenseData) => {
         return existingData.some(rowRaw => {
@@ -94,7 +108,7 @@ export class SheetsService {
         });
       };
 
-      const newRows = expenses
+      const newRows = filteredExpenses
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .filter(expense => !isDuplicate(expense))
         .map(expense => [
