@@ -95,15 +95,21 @@ export class SheetsService {
       const filteredExpenses = expenses.filter(e => new Date(e.date) >= fiscalStart);
 
       // 4. 重複していないSlackデータだけをappendで追記
-      const normalize = (v: unknown) => (v || '').toString().trim();
+      const normalizeDate = (v: unknown) => {
+        const d = new Date((v || '').toString().trim());
+        if (isNaN(d.getTime())) return '';
+        return d.toISOString().slice(0, 10); // 'YYYY-MM-DD'
+      };
+      const normalizeNumber = (v: unknown) => Number((v || '').toString().replace(/[^0-9]/g, ''));
+      const normalizeText = (v: unknown) => (v || '').toString().trim();
+
       const isDuplicate = (expense: ExpenseData) => {
         return existingData.some(rowRaw => {
           const row = [...rowRaw, ...Array(31 - rowRaw.length).fill('')];
           return (
-            normalize(row[0]) === normalize(expense.date) &&
-            normalize(row[7]) === normalize(expense.accountCode) &&
-            normalize(row[12]) === normalize(expense.content) &&
-            normalize(row[14]) === normalize(expense.amount)
+            normalizeDate(row[0]) === normalizeDate(expense.date) &&
+            normalizeNumber(row[7]) === normalizeNumber(expense.accountCode) &&
+            normalizeNumber(row[14]) === normalizeNumber(expense.amount)
           );
         });
       };
