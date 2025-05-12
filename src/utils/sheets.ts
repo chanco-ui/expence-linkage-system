@@ -101,7 +101,6 @@ export class SheetsService {
         return d.toISOString().slice(0, 10); // 'YYYY-MM-DD'
       };
       const normalizeNumber = (v: unknown) => Number((v || '').toString().replace(/[^0-9]/g, ''));
-      const normalizeText = (v: unknown) => (v || '').toString().trim();
 
       const isDuplicate = (expense: ExpenseData) => {
         return existingData.some(rowRaw => {
