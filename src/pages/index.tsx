@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import Head from 'next/head';
 
+interface SyncResult {
+  success: boolean;
+  message: string;
+  data?: unknown;
+}
+
 export default function Home() {
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string; data?: any } | null>(null);
+  const [result, setResult] = useState<SyncResult | null>(null);
 
   const handleSync = async () => {
     setLoading(true);
@@ -20,9 +26,9 @@ export default function Home() {
         body: JSON.stringify({ days })
       });
 
-      const data = await response.json();
+      const data: SyncResult = await response.json();
       setResult(data);
-    } catch (error) {
+    } catch {
       setResult({
         success: false,
         message: '同期処理中にエラーが発生しました'
@@ -81,7 +87,7 @@ export default function Home() {
             }`}
           >
             <p className="font-medium">{result.message}</p>
-            {result.data && (
+            {typeof result.data === 'object' && result.data !== null && (
               <div className="mt-4">
                 <h3 className="font-semibold mb-2">処理結果</h3>
                 <pre className="bg-gray-50 p-4 rounded overflow-auto">
